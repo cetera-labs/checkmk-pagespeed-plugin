@@ -1,0 +1,37 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+# {
+#   'timeout': '180',
+#   'api_key': 'va432fADggds43gvkygh#Edg'
+#   'check_url: 'https://example.com',
+#   'ttl': '7200',
+# }
+
+def agent_pagespeed_arguments(params, hostname, ipaddress):
+    args = hostname
+
+    if "timeout" in params:
+        args += ' %d' % params["timeout"]
+    else:
+        args += ' 180'
+
+    if "check_url" in params:
+        args += ' %s' % params["check_url"]
+    else:
+        args += ' http://%s' % hostname
+
+    if "api_key" in params:
+        args += ' %s' % params["api_key"]
+    else:
+        args += ' 0'
+
+    if "ttl" in params:
+        args += ' %d' % params["ttl"]
+    else:
+        args += ' 3600'
+
+    return args
+
+
+special_agent_info['pagespeed'] = agent_pagespeed_arguments

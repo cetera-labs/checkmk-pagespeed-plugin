@@ -1,0 +1,61 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#
+# 2020 Ivan Bakharev <ivanbakharev@protonmail.com>
+
+# Example output from agent:
+# <<<pagespeed>>>
+# server.com 80 75
+# <<<<>>>>
+
+
+factory_settings["pagespeed_defaults"] = {
+    "score": (90, 50)
+}
+
+
+def inventory_pagespeed(info):
+    inventory = []
+    for line in info:
+        if len(line) > 0:
+            if line[0] == 'JSON':
+                continue
+            inventory.append((line[0], {}))
+    return inventory
+
+
+def check_pagespeed(item, params, info):
+    for line in info:
+        warn, crit = params["score"]
+        desktop_score = int(line[1])
+        mobile_score = int(line[2])
+        min_score = mobile_score if desktop_score > mobile_score else desktop_score
+
+        if min_score < int(crit):
+            state = 2
+        elif min_score < int(warn):
+            state = 1
+        elif min_score <= 100:
+            state = 0
+        else:
+            state = 3
+
+        perfdata = [
+            ("desktop", desktop_score, '', '', 0, ''),
+            ("mobile", mobile_score, '', '', 0, '')
+        ]
+
+        return state, "performance desktop: %s; performance mobile: %s" % (
+        desktop_score, mobile_score), perfdata
+
+    raise Exception("connect to pagespeed api failed")
+
+
+check_info['pagespeed'] = {
+    "check_function": check_pagespeed,
+    "inventory_function": inventory_pagespeed,
+    "service_description": "PAGESPEED %s",
+    "has_perfdata": True,
+    "default_levels_variable": "pagespeed_defaults",
+    "group": "pagespeed",
+}

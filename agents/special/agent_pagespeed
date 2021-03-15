@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#
+# Ivan Bakharev <ivanbakharev@protonmail.com>
+#
+#
+# check_mk is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  check_mk is  distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
+
+import json, sys, urllib2, os, simple_cache, hashlib
+
+server = "www.googleapis.com"
+uri = "pagespeedonline/v5/runPagespeed"
+category = 'performance'
+
+try:
+    host_address = sys.argv[1]
+    timeout = float(sys.argv[2])
+    check_url = sys.argv[3]
+    api_key = sys.argv[4]
+    cache_ttl = int(sys.argv[5])
+    cache_dir = os.getenv('OMD_ROOT') + '/.cache/agents/pagespeed'
+
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+
+    cache_dir += '/%s.cache' % hashlib.md5(check_url).hexdigest()
+
+except:
+    print "Usage: agent_pagespeed <host_address> <timeout> <api_key> <check_url>"
+    sys.exit(2)
+
+print "<<<<%s>>>>" % host_address
+print "<<<pagespeed>>>"
+
+scores = {
+    'desktop': 0,
+    'mobile': 0
+}
+
+
+@simple_cache.cache_it(cache_dir, cache_ttl)
+def get_scores(strategy, check_url):
+    url = 'https://%s/%s?url=%s&category=%s&strategy=%s' % (server, uri, check_url, category, strategy)
+
+    if len(api_key) > 1:
+        url += '&key=%s' % api_key
+
+    try:
+        jsonData = json.load(urllib2.urlopen(url, None, timeout))
+    except urllib2.HTTPError as e:
+        sys.stderr.write('HTTP-Error (%s): %s %s\n' % (url, e.code, e))
+        sys.exit(2)
+
+    try:
+        return int(jsonData['lighthouseResult']['categories'][category]['score'] * 100)
+    except (ValueError, KeyError, TypeError):
+        return None
+
+print "%s %s %s" % (check_url, get_scores('desktop', check_url), get_scores('mobile', check_url))
+
+print "<<<<>>>>"
