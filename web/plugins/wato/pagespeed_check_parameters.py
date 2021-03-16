@@ -1,13 +1,27 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 #
 # 2020 Ivan Bakharev <ivanbakharev@protonmail.com>
 
-register_check_parameters(
-    subgroup_applications,
-    "pagespeed",
-    _("PageSpeed scan checks"),
-    Dictionary(
+from cmk.gui.i18n import _
+from cmk.gui.valuespec import (
+    Dictionary,
+    Integer,
+    TextAscii,
+    Tuple,
+)
+
+from cmk.gui.plugins.wato import (
+    CheckParameterRulespecWithItem,
+    rulespec_registry,
+    RulespecGroupCheckParametersApplications,
+)
+
+def _item_spec_pagespeed():
+    return TextAscii(title=_("PageSpeed scan checks"))
+
+def _parameter_valuespec_pagespeed():
+    return Dictionary(
         elements=[
             ("score",
              Tuple(
@@ -17,10 +31,18 @@ register_check_parameters(
                     Integer(title=_('Warning below'), default_value=90),
                     Integer(title=_('Critical below'), default_value=50),
                  ]
-             ),
-             ),
-        ]
-    ),
-    None,
-    match_type="dict",
+             )),
+        ],
+    )
+
+rulespec_registry.register(
+    CheckParameterRulespecWithItem(
+        check_group_name="pagespeed",
+        group=RulespecGroupCheckParametersApplications,
+        item_spec=_item_spec_pagespeed,
+        match_type="dict",
+        parameter_valuespec=_parameter_valuespec_pagespeed,
+        title=lambda: _("PageSpeed"),
+    )
 )
+
