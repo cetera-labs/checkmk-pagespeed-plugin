@@ -14,7 +14,8 @@
 # License along with GNU Make; see the file  COPYING.  If  not,  write
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
-import sys, requests, os, hashlib, simple_cache
+import sys, requests, os, hashlib
+from cmk.base.plugins.agent_based import simple_cache
 
 server = "www.googleapis.com"
 uri = "pagespeedonline/v5/runPagespeed"
